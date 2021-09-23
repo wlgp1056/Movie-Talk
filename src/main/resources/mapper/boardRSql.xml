@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.movietalk.app.service.mapper.BoardRMapper">
+
+	<!-- <select resultType="org.movietalk.app.web.BoardRDTO" id="list"> select 
+		* from review_board </select> -->
+
+
+<!-- 검색 -->
+	<select id="list" resultType="org.movietalk.app.web.BoardRDTO">
+      select * from review_board where 1=1
+      <if test="searchCondition == 'rboard_title'"> and
+         rboard_title like '%'||#{searchKeyword}||'%'</if>
+      <if test="searchCondition == 'rboard_writer'"> and
+         rboard_writer like '%'||#{searchKeyword}||'%'</if>
+      order by rboard_seq desc
+   </select>
+
+
+	<select resultType="org.movietalk.app.web.BoardRDTO" id="detail">
+		select *
+		from review_board where rboard_seq=#{rboard_seq}
+	</select>
+
+		<!-- 페이징 -->
+<select id="getTotalCount" resultType="int">
+	select count(*) from review_board 
+	
+	<if test= "searchCondition == 'rboard_title'">
+		where rboard_title like '%'||#{searchKeyword}||'%' 
+	</if>
+	<if test= "searchCondition == 'rboard_writer'">
+		where rboard_writer like '%'||#{searchKeyword}||'%' 
+	</if>
+	
+</select>
+
+<select id="getListWithPaging" resultType="org.movietalk.app.web.BoardRDTO">
+   <![CDATA[
+   
+select * from
+(
+select /*+index_desc(review_board p_rboard_seq) */ rownum rn, rboard_seq, rboard_title, rboard_writer, rboard_regdate, rboard_hit, rboard_grade
+from review_board
+where rboard_seq > 0 and rownum > 0 and rownum <= (#{pageNum} * #{amount})
+]]>
+   <if test="searchCondition == 'rboard_title'"> and
+         rboard_title like '%'||#{searchKeyword}||'%'</if>
+      <if test="searchCondition == 'rboard_writer'"> and
+         rboard_writer like '%'||#{searchKeyword}||'%'</if>
+   
+    
+<![CDATA[
+)  
+where rn > (#{pageNum}-1) * #{amount}
+
+   ]]>
+   
+</select>
+
+<!-- 10은 amount, 20은 pageNum이다. rownum <= pageNum*amount 1페이지일 경우
+rouwnum 을 10개까지만 찾아야 하고 2 페이지일 경우 rownum을 20개까지 찾아야하기 때문에
+[[페이지*게시글 표시량]]으로 계산한다. 
+- rn > (pageNum -1) * amount
+
+  1 페이지일 경우 rownum 을 인라인뷰에서 1~10까지만 찾아야하고 2 페이지일 경우 rownum을 
+  인라인뷰에서 11~20까지만 찾아내야하기 때문에 [[ (페이지-1) * 게시글 표시량 ]] 으로 계산한다.
+-->
+
+
+	<delete id="delete"> delete from review_board where
+		rboard_seq=#{rboard_seq}
+	</delete>
+
+	<insert id="insert">
+		insert into review_board(rboard_seq, rboard_title, rboard_writer,
+		rboard_content, rboard_grade, fileName) values ((select
+		nvl(max(rboard_seq), 0)+1 from review_board), #{rboard_title},
+		#{rboard_writer}, #{rboard_content}, #{rboard_grade},
+		#{fileName,jdbcType=VARCHAR})
+	</insert>
+
+	<update id="hit">
+		update review_board set rboard_hit=rboard_hit+1 where
+		rboard_seq =
+		#{rboard_seq}
+	</update>
+
+	<update id="modify">
+		update review_board set rboard_title=#{rboard_title},
+		rboard_content=#{rboard_content}, rboard_grade=#{rboard_grade}
+		where
+		rboard_seq=#{rboard_seq}
+	</update>
+
+	<!-- 댓글 -->
+	<select id="readReply"
+		resultType="org.movietalk.app.web.BoardRDTO">
+		select rreply_seq, rreply_content, rreply_writer,
+		rreply_regdate from
+		reply_review where r_seq=#{rboard_seq}
+	</select>
+
+	<insert id="insertRpl">
+		insert into reply_review(rreply_seq, rreply_writer,
+		rreply_content, r_seq)
+		values (((SELECT NVL(MAX(rreply_seq), 0)+1 FROM
+		reply_review)),
+		#{rreply_writer}, #{rreply_content}, #{rboard_seq})
+	</insert>
+
+	<select id="detailRpl"
+		resultType="org.movietalk.app.web.BoardRDTO">
+		select * from reply_review where rreply_seq=#{rreply_seq}
+	</select>
+
+	<update id="modifyRpl">
+		update reply_review set
+		rreply_writer=#{rreply_writer},
+		rreply_content=#{rreply_content},
+		rreply_regdate=sysdate where rreply_seq=#{rreply_seq}
+	</update>
+
+	<delete id="deleteRpl">
+		delete from reply_review where
+		rreply_seq=#{rreply_seq}
+	</delete>
+
+</mapper>

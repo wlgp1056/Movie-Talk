@@ -1,0 +1,49 @@
+@charset "utf-8";
+
+/* Reset CSS */
+body, h1, h2, h3, h4, h5, h6, p, ul, ol {
+	margin: 0;
+	padding: 0;
+}
+ul, ol {
+	list-style: none;
+}
+a {
+	text-decoration: none;
+}
+img {
+	vertical-align: top;
+}
+
+/* 가이드에 언급된 CSS */
+body {
+	background-color: #fff;
+	color: #333;
+}
+a {
+	color: #333;
+}
+
+/* Common CSS */
+
+
+
+.slider {
+	position: relative;
+	margin: 0 auto;
+	width: 1296px;
+	height: 300px;
+	overflow: hidden;
+	margin-bottom: 40px;
+}
+.slider ul {
+	position: absolute;
+	left: 0;
+	width: 4800px;
+	height: 300px;
+}
+.slider ul li {
+	float: left;
+	width: 1296px;
+	height: 300px;
+}
